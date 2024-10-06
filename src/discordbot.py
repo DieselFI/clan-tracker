@@ -80,12 +80,12 @@ async def on_message(message):
 
     playertracker.track_players(r, rsn)
 
-    update_leaderboard()
+    await update_leaderboard()
 
 
 @client.event
 async def on_ready():
-   update_leaderboard()
+   await update_leaderboard()
 
 async def update_leaderboard():
     channel = client.get_channel(0) #replace with channel id

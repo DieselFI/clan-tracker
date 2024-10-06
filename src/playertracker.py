@@ -32,7 +32,7 @@ PARSED_CLOG = {
     "Champion's cape": 0,
     "Fire cape": 0,
     "Infernal cape": 0,
-    "Dizana's quiver": 0,
+    "Dizana's quiver (uncharged)": 0,
     "CoX KC": 0,
     "CoX CM KC": 0,
     "ToB KC": 0,
@@ -91,7 +91,11 @@ def get_member_stats(member):
     return requests.get("https://templeosrs.com/api/player_stats.php?player={}".format(member), params={"bosses": 1}).json()
 
 def get_collectionlog(member):
-    return requests.get("https://api.collectionlog.net/collectionlog/user/{}".format(member)).json()
+    replacements = [' ', '-', '_']
+    for char in replacements:
+        r = requests.get('https://api.collectionlog.net/collectionlog/user/{}'.format(member.replace(' ', char)))
+        if r.status_code == 200:
+            return requests.get("https://api.collectionlog.net/collectionlog/user/{}".format(member)).json()
 
 def get_collectionlog_pets(member):
     return requests.get("https://api.collectionlog.net/items/user/{}".format(member), params={"pageName": "All Pets"}).json()
@@ -146,7 +150,7 @@ def compute_points(player_tracker, verbose=False):
             points += v
             points_verbose_printer(k, v, points, verbose)
         else:
-            points_verbose_printer(k, , points, verbose)
+            points_verbose_printer(k, 0, points, verbose)
 
 
 
@@ -334,5 +338,5 @@ def track_players(redis_conn, player='None', verbose=False):
             player_tracker[member_rsn]["Other"]["Elite CA"] = True if member[6] == "TRUE" else False
             player_tracker[member_rsn]["Other"]["Master CA"] = True if member[7] == "TRUE" else False
             player_tracker[member_rsn]["Other"]["Grandmaster CA"] = True if member[8] == "TRUE" else False
-            player_tracker[member_rsn]["Points"] = compute_points(player_tracker[member_rsn], verbose=False)
+            player_tracker[member_rsn]["Points"] = compute_points(player_tracker[member_rsn], verbose)
             redis_conn.set(member_rsn, json.dumps(player_tracker[member_rsn]))
