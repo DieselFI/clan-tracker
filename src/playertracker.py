@@ -19,6 +19,7 @@ CLOG_PAGES = {
   "Champion's cape": "Other/Champion's Challenge",
   "Fire cape": "Bosses/The Fight Caves",
   "Infernal cape": "Bosses/The Inferno",
+  "Dizana's quiver (uncharged)": "Bosses/Fortis Colosseum",
   "CoX KC": "Raids/Chambers of Xeric/0",
   "CoX CM KC": "Raids/Chambers of Xeric/1",
   "ToB KC": "Raids/Theatre of Blood/0",
@@ -31,6 +32,7 @@ PARSED_CLOG = {
   "Champion's cape": 0,
   "Fire cape": 0,
   "Infernal cape": 0,
+  "Dizana's quiver": 0,
   "CoX KC": 0,
   "CoX CM KC": 0,
   "ToB KC": 0,
@@ -44,7 +46,8 @@ PARSED_CLOG = {
 CLOG_POINT_CALCULATOR = {
   "Champion's cape": 2,
   "Fire cape": 1,
-  "Infernal cape": 5
+  "Infernal cape": 5,
+  "Dizana's quiver (uncharged)": 3
 }
 OTHER_POINT_CALCULATOR = {
     "Quest cape": 1,
