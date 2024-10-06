@@ -180,12 +180,18 @@ def compute_points(player_tracker, verbose=False):
     if cox_kc >= 10 and tob_kc >= 10 and player_tracker["Collection Log"]["ToA KC"] + toa_kc >= 10:
         points +=1
         points_verbose_printer("10 raids kc", 1, points, verbose)
+    else:
+        points_verbose_printer("10 raids kc", 0, points, verbose)
     if cox_kc >= 100 and tob_kc >= 100 and player_tracker["Collection Log"]["ToA Expert KC"] >= 100:
         points += 2
-        points_verbose_printer("100 raids kc", 1, points, verbose)
+        points_verbose_printer("100 raids kc", 2, points, verbose)
+    else:
+        points_verbose_printer("100 raids kc", 0, points, verbose)
     if player_tracker["Collection Log"]["CoX CM KC"] >= 100 and player_tracker["Collection Log"]["ToB HM KC"] >= 100 and player_tracker["Collection Log"]["Cursed phalanx"] > 0:
         points += 4
-        points_verbose_printer("100 challenge raids kc and fang kit", 1, points, verbose)
+        points_verbose_printer("100 challenge raids kc and fang kit", 4, points, verbose)
+    else:
+        points_verbose_printer("100 challenge raids kc and fang kit", 0, points, verbose)
 
     raids_kc = cox_kc + tob_kc + toa_kc
     temp_point_counter = 0
