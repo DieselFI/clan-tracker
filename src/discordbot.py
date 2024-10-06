@@ -6,19 +6,10 @@ import redis
 from tabulate import tabulate
 import playertracker
 
-# Functionality of the bot: !rank <rsn> (displays rsn, clan rank, leaderboard standing with points); (sends rsn to db) (recieves 4 variables)
-# !updatedb (mod only command reruns scraping program)
-# Displays leaderboard to the clan rank channel
-# copy infernos speeds leaderboard. buttons mandatory else show all.
-# get code to send message to mods for when we need to rank someone up
-# !ranks displays requirements to hit each rank
-#
-
 intents = discord.Intents.all()
 intents.message_content = True
 #  Set up your discord bot token
-#TOKEN = os.environ['Token']
-TOKEN = ''
+TOKEN = ""
 
 #Create a client instance
 client = discord.Client(intents=intents)
@@ -59,7 +50,7 @@ class LeaderboardView(discord.ui.View):
 
     async def update_leaderboard(self, interaction):
         offset = self.page * self.page_size
-        await interaction.response.edit_message(content="```{}```".format(tabulate(self.leaderboard[offset:offset + self.page_size], headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP'])), view=self)
+        await interaction.response.edit_message(content="```{}```".format(tabulate(self.leaderboard[offset:offset + self.page_size], headers=["#", "RSN", "Rank", "Points", "EHB + EHP"])), view=self)
 
 @client.event
 async def on_message(message):
@@ -73,31 +64,42 @@ async def on_message(message):
     leaderboard = playertracker.compute_leaderboard(rankings, r)
 
     view = LeaderboardView(leaderboard)
-    body = tabulate(leaderboard[0:25], headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP'])
+    body = tabulate(leaderboard[0:25], headers=["#", "RSN", "Rank", "Points", "EHB + EHP"])
     view.message = await message.author.send(content="```{}```".format(body), view=view)
 
-  if msg.startswith('!rank'):
-    rsn = msg.split(' ', 1)[1]
+  if msg.startswith("!rank"):
+    rsn = msg.split(" ", 1)[1]
 
     p = json.loads(r.get(rsn.lower()))
 
     #send message back
     message = await message.author.send(content="{} has the following data tracked...\n```{}```".format(rsn, pformat(p)))
+  
+  if msg.startswith("!update"):
+    rsn = msg.split(" ", 1)[1]
+
+    playertracker.track_players(r, rsn)
+
+    update_leaderboard()
+
 
 @client.event
 async def on_ready():
+   update_leaderboard()
+
+async def update_leaderboard():
     channel = client.get_channel(0) #replace with channel id
 
     rankings = playertracker.compute_ranks(r)
     leaderboard = playertracker.compute_leaderboard(rankings, r)
 
     view = LeaderboardView(leaderboard)
-    body = tabulate(leaderboard[0:25], headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP'])
+    body = tabulate(leaderboard[0:25], headers=["#", "RSN", "Rank", "Points", "EHB + EHP"])
     msg = await channel.fetch_message(0) #replace with msg
     await msg.edit(content="```{}```".format(body), view=view)
 
 # Run the client
-pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
+pool = redis.ConnectionPool(host="localhost", port=6379, db=0)
 r = redis.Redis(connection_pool=pool)
 
 client.run(TOKEN)

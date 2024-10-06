@@ -208,11 +208,14 @@ def compute_leaderboard(rankings, redis_conn):
     redis_conn.set(leaderboard[i][0], json.dumps(p))
   return leaderboard
 
-def track_players(redis_conn):
+def track_players(redis_conn, player='None'):
 
   player_tracker = {}
-
-  for member in [x.lower() for x in get_temple_group_members(LOGIN_TEMPLE_ID)]:
+  if player:
+    members = [player]
+  else:
+    members = [x.lower() for x in get_temple_group_members(LOGIN_TEMPLE_ID)]
+  for member in members:
     try:
       gamemode = GAME_MODE[get_member_gamemode(member)["data"]["Game mode"]]
     except:
