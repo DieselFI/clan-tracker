@@ -8,7 +8,7 @@ import playertracker
 
 intents = discord.Intents.all()
 intents.message_content = True
-#  Set up your discord bot token
+# Set up your discord bot token
 TOKEN = ""
 
 #Create a client instance
