@@ -8,4 +8,4 @@ if __name__ == "__main__":
   playertracker.track_players(r)
   rankings = playertracker.compute_ranks(r)
   leaderboard = playertracker.compute_leaderboard(rankings, r)
-  print(tabulate(leaderboard, headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP']))
+  #print(tabulate(leaderboard, headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP']))

@@ -1,7 +1,4 @@
 import discord
-import os
-from discord.ext import commands
-from discord.ui import Button, View
 import json
 
 from pprint import pformat
@@ -34,6 +31,7 @@ class LeaderboardView(discord.ui.View):
         self.leaderboard = data
         self.page = 0
         self.page_size = 25
+        self.timeout = None
 
     @discord.ui.button(style=discord.ButtonStyle.gray, label="<<")
     async def first_page(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -73,7 +71,6 @@ async def on_message(message):
   if msg == "!leaderboard":
     rankings = playertracker.compute_ranks(r)
     leaderboard = playertracker.compute_leaderboard(rankings, r)
-    data = leaderboard # Replace with actual data
 
     view = LeaderboardView(leaderboard)
     body = tabulate(leaderboard[0:25], headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP'])
@@ -93,13 +90,11 @@ async def on_ready():
 
     rankings = playertracker.compute_ranks(r)
     leaderboard = playertracker.compute_leaderboard(rankings, r)
-    data = leaderboard # Replace with actual data
 
     view = LeaderboardView(leaderboard)
-#    body = tabulate(leaderboard[0:25], headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP'])
-#    view.message = await channel.send(content="```{}```".format(body), view=view)
-    msg = await channel.fetch_message(0) #replace with msg id
-    await msg.edit(content='edited at startup')
+    body = tabulate(leaderboard[0:25], headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP'])
+    msg = await channel.fetch_message(0) #replace with msg
+    await msg.edit(content="```{}```".format(body), view=view)
 
 # Run the client
 pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
