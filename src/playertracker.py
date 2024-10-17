@@ -13,7 +13,8 @@ ALL_PETS = 56
 GAME_MODE = {
     0 : "Main",
     1 : "IM",
-    2 : "UIM"
+    2 : "UIM",
+    3 : "HCIM"
 }
 CLOG_PAGES = {
     "Champion's cape": "Other/Champion's Challenge",
