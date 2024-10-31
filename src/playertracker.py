@@ -264,10 +264,17 @@ def track_players(redis_conn, player='None', verbose=False):
         members = [player]
     else:
         members = [x.lower() for x in get_temple_group_members(LOGIN_TEMPLE_ID)]
+    if verbose:
+        print("Fetching data from temple")
+    member_counter = 0
     for member in members:
+        member_counter += 1
+        if verbose:
+            print(f"[{member_counter}/{len(members)}] {member}")
         try:
             gamemode = GAME_MODE[get_member_gamemode(member)["data"]["Game mode"]]
         except:
+            print("Failed to retrieve game mode for {}".format(member))
             continue
         player_tracker[member] = {
             "Type": gamemode,
@@ -332,6 +339,8 @@ def track_players(redis_conn, player='None', verbose=False):
         try:
             player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
         except:
+            if verbose:
+                print("Failed to parse collection data for {}".format(member))
             pass
 
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
