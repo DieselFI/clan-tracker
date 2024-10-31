@@ -94,7 +94,7 @@ async def update_leaderboard():
     channel_id = int(os.getenv('DISCORD_CHANNEL_ID')) or 0
     if channel_id == 0:
         print("Warning: No DISCORD_CHANNEL_ID environment variable set. Defaulting to 0.")
-    channel_id = client.get_channel(channel_id)
+    channel = client.get_channel(channel_id)
 
     rankings = playertracker.compute_ranks(r)
     leaderboard = playertracker.compute_leaderboard(rankings, r)
