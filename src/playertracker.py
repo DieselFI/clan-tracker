@@ -221,29 +221,30 @@ def compute_points(player_tracker, verbose=False):
             points_verbose_printer(k, 0, points, verbose)
     return points
 
-def compute_ranks(redis_conn):
+def update_all_ranks(redis_conn):
     members = [x.lower() for x in get_temple_group_members(LOGIN_TEMPLE_ID)]
     rankings = []
     for member in members:
         p = json.loads(redis_conn.get(member))
-        rank = 0
-        for _,v in RANKS_EHP_EHB.items():
-            if math.floor(p["EHB"] + p["EHP"]) >= v:
-                rank += 1
-                continue
-            else:
-                break
-        for _,v in RANKS_POINTS.items():
-            if p["Points"] >= v:
-                rank += 1
-                continue
-            else:
-                break
+        rank = compute_rank(p)
         p["Rank"] = rank
         rankings.append([member, rank, p["Points"], math.floor(p["EHB"] + p["EHP"])])
         redis_conn.set(member, json.dumps(p))
-
     return rankings
+
+def compute_rank(player_json):
+    rank = 0
+    for v in RANKS_EHP_EHB.values():
+        if math.floor(player_json["EHB"] + player_json["EHP"]) >= v:
+            rank += 1
+        else:
+            break
+    for v in RANKS_POINTS.values():
+        if player_json["Points"] >= v:
+            rank += 1
+        else:
+            break
+    return rank
 
 def compute_leaderboard(rankings, redis_conn):
     leaderboard = []
@@ -346,4 +347,5 @@ def track_players(redis_conn, player='None', verbose=False):
             player_tracker[member_rsn]["Other"]["Master CA"] = True if member[7] == "TRUE" else False
             player_tracker[member_rsn]["Other"]["Grandmaster CA"] = True if member[8] == "TRUE" else False
             player_tracker[member_rsn]["Points"] = compute_points(player_tracker[member_rsn], verbose)
+            player_tracker[member_rsn]["Rank"] = compute_rank(player_tracker[member_rsn])
             redis_conn.set(member_rsn, json.dumps(player_tracker[member_rsn]))

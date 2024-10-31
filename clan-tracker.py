@@ -18,6 +18,6 @@ if __name__ == "__main__":
     r = redis.Redis(connection_pool=pool)
     playertracker.track_players(r, args.rsn, args.verbose)
     if args.leaderboard:
-        rankings = playertracker.compute_ranks(r)
+        rankings = playertracker.update_all_ranks(r)
         leaderboard = playertracker.compute_leaderboard(rankings, r)
         print(tabulate(leaderboard, headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP']))
