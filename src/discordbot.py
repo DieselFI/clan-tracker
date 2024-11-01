@@ -62,7 +62,7 @@ async def on_message(message):
     return
 
   if msg == "!leaderboard":
-    rankings = playertracker.compute_ranks(r)
+    rankings = playertracker.update_all_ranks(r)
     leaderboard = playertracker.compute_leaderboard(rankings, r)
 
     view = LeaderboardView(leaderboard)

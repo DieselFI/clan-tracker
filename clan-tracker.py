@@ -28,6 +28,6 @@ if __name__ == "__main__":
         for k, v in data.items():
             r.set(k, json.dumps(v))
     if args.leaderboard:
-        rankings = playertracker.compute_ranks(r)
+        rankings = playertracker.update_all_ranks(r)
         leaderboard = playertracker.compute_leaderboard(rankings, r)
         print(tabulate(leaderboard, headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP']))

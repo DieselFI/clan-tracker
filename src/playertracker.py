@@ -268,7 +268,7 @@ def track_all_players(verbose=False):
         gim_mode = member_info["gim_mode"]
         if gamemode == "Main" and gim_mode != None and gim_mode != 0:
             gamemode = "GIM"
-
+            
         player_tracker[member] = {
             "Type": gamemode,
             "EHB": 0,
@@ -324,6 +324,15 @@ def track_all_players(verbose=False):
         else:
             print("unknown gamemode!")
             exit(1)
+            
+        clog = get_collectionlog(member)
+        clog_pets = get_collectionlog_pets(member)
+        try:
+            player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
+        except:
+            if verbose:
+                print("Failed to parse collection data for {}".format(member))
+            pass
 
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
     for member_data in other_data:
@@ -341,7 +350,6 @@ def track_all_players(verbose=False):
     return player_tracker
 
 def track_player(member: str, verbose=False):
-
     player_tracker = {}
 
     if verbose:
