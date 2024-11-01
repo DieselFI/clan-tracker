@@ -1,3 +1,4 @@
+import math
 import redis
 import argparse
 import json
@@ -28,6 +29,10 @@ if __name__ == "__main__":
         for k, v in data.items():
             r.set(k, json.dumps(v))
     if args.leaderboard:
-        rankings = playertracker.compute_ranks(r)
+        rankings = []
+        members = [x.lower() for x in playertracker.get_temple_group_members()]
+        for member in members:
+            data = json.loads(r.get(member))
+            rankings.append([member, data["Rank"], data["Points"], math.floor(data["EHB"] + data["EHP"])])
         leaderboard = playertracker.compute_leaderboard(rankings, r)
         print(tabulate(leaderboard, headers=['#', 'RSN', 'Rank', 'Points', 'EHB + EHP']))

@@ -78,8 +78,8 @@ RANKS_POINTS = {
 
 @sleep_and_retry
 @limits(calls=5, period=300)
-def get_temple_group_members(group_id):
-    return requests.get("https://templeosrs.com/api/groupmembers.php?id={}".format(group_id)).json()
+def get_temple_group_members():
+    return requests.get("https://templeosrs.com/api/groupmembers.php?id={}".format(LOGIN_TEMPLE_ID)).json()
 
 @sleep_and_retry
 @limits(calls=25, period=60)
@@ -88,8 +88,8 @@ def get_player_stats(member):
 
 @sleep_and_retry
 @limits(calls=25, period=60)
-def get_temple_group_member_info(group_id):
-    return  requests.get("https://templeosrs.com/api/group_member_info.php?id={}".format(group_id), params={"skills" : 1, "bosses": 1}).json()
+def get_temple_group_member_info():
+    return  requests.get("https://templeosrs.com/api/group_member_info.php?id={}".format(LOGIN_TEMPLE_ID), params={"skills" : 1, "bosses": 1}).json()
 
 def get_collectionlog(member):
     replacements = [' ', '-', '_']
@@ -222,7 +222,7 @@ def compute_points(player_tracker, verbose=False):
     return points
 
 def update_all_ranks(redis_conn):
-    members = [x.lower() for x in get_temple_group_members(LOGIN_TEMPLE_ID)]
+    members = [x.lower() for x in get_temple_group_members()]
     rankings = []
     for member in members:
         p = json.loads(redis_conn.get(member))
@@ -258,7 +258,7 @@ def compute_leaderboard(rankings, redis_conn):
     return leaderboard
 
 def track_all_players(verbose=False):
-    group_info = get_temple_group_member_info(LOGIN_TEMPLE_ID)
+    group_info = get_temple_group_member_info()
 
     player_tracker = {}
     for member in group_info["data"]["memberlist"]:
