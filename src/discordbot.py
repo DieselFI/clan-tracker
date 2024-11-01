@@ -62,7 +62,7 @@ async def on_message(message):
     return
 
   if msg == "!leaderboard":
-    rankings = playertracker.compute_ranks(r)
+    rankings = playertracker.update_all_ranks(r)
     leaderboard = playertracker.compute_leaderboard(rankings, r)
 
     view = LeaderboardView(leaderboard)
@@ -80,7 +80,7 @@ async def on_message(message):
   if msg.startswith("!update"):
     rsn = msg.split(" ", 1)[1]
 
-    playertracker.track_players(r, rsn)
+    playertracker.track_player(r, rsn)
 
     await update_leaderboard()
 
@@ -96,7 +96,7 @@ async def update_leaderboard():
         print("Warning: No DISCORD_CHANNEL_ID environment variable set. Defaulting to 0.")
     channel = client.get_channel(channel_id)
 
-    rankings = playertracker.compute_ranks(r)
+    rankings = playertracker.update_all_ranks(r)
     leaderboard = playertracker.compute_leaderboard(rankings, r)
 
     view = LeaderboardView(leaderboard)
