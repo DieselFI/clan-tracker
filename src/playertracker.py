@@ -263,13 +263,11 @@ def track_all_players(verbose=False):
     player_tracker = {}
     for member in group_info["data"]["memberlist"]:
         member_info = group_info["data"]["memberlist"][member]
-        print(member)
         gamemode = GAME_MODE[member_info["game_mode"]]
         # Check if GIM
         gim_mode = member_info["gim_mode"]
         if gamemode == "Main" and gim_mode != None and gim_mode != 0:
             gamemode = "GIM"
-        print(gamemode)
 
         player_tracker[member] = {
             "Type": gamemode,
