@@ -325,6 +325,21 @@ def track_all_players(verbose=False):
             print("unknown gamemode!")
             exit(1)
 
+        skill_cape_max_tracker = check_skill_cape_and_max(skill_info)
+        player_tracker[member]["Skill Cape"] = skill_cape_max_tracker[0]
+        player_tracker[member]["Maxed"] = skill_cape_max_tracker[1]
+        player_tracker[member]["Minimum Level"] = skill_cape_max_tracker[2]
+        player_tracker[member]["Total XP"] = skill_info["Overall"]
+
+        clog = get_collectionlog(member)
+        clog_pets = get_collectionlog_pets(member)
+        try:
+            player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
+        except:
+            if verbose:
+                print("Failed to parse collection data.")
+            pass
+
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
     for member_data in other_data:
         if member_data[0].lower() in player_tracker.keys():
