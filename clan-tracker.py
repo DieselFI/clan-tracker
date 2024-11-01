@@ -1,5 +1,6 @@
 import redis
 import argparse
+import json
 from tabulate import tabulate
 from src import playertracker
 
@@ -16,7 +17,16 @@ if __name__ == "__main__":
 
     pool = redis.ConnectionPool(host="localhost", port=6379, db=0)
     r = redis.Redis(connection_pool=pool)
-    playertracker.track_players(r, args.rsn, args.verbose)
+
+    if args.rsn:
+        # Fetch data for specific player
+        data = playertracker.track_player(args.rsn)
+        r.set(args.rsn, json.dumps(data[args.rsn]))
+    else:
+        # Fetch data for all clan members
+        data = playertracker.track_all_players()
+        for k, v in data.items():
+            r.set(k, json.dumps(v))
     if args.leaderboard:
         rankings = playertracker.update_all_ranks(r)
         leaderboard = playertracker.compute_leaderboard(rankings, r)
