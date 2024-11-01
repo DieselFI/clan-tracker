@@ -83,13 +83,13 @@ def get_temple_group_members(group_id):
 
 @sleep_and_retry
 @limits(calls=25, period=60)
-def get_member_gamemode(member):
-    return requests.get("https://templeosrs.com/api/player_info.php?player={}".format(member)).json()
+def get_player_stats(member):
+    return requests.get("https://templeosrs.com/api/player_stats.php?player={}".format(member), params={"bosses": 1}).json()
 
 @sleep_and_retry
 @limits(calls=25, period=60)
-def get_member_stats(member):
-    return requests.get("https://templeosrs.com/api/player_stats.php?player={}".format(member), params={"bosses": 1}).json()
+def get_temple_group_member_info(group_id):
+    return  requests.get("https://templeosrs.com/api/group_member_info.php?id={}".format(group_id), params={"skills" : 1, "bosses": 1}).json()
 
 def get_collectionlog(member):
     replacements = [' ', '-', '_']
@@ -221,29 +221,30 @@ def compute_points(player_tracker, verbose=False):
             points_verbose_printer(k, 0, points, verbose)
     return points
 
-def compute_ranks(redis_conn):
+def update_all_ranks(redis_conn):
     members = [x.lower() for x in get_temple_group_members(LOGIN_TEMPLE_ID)]
     rankings = []
     for member in members:
         p = json.loads(redis_conn.get(member))
-        rank = 0
-        for _,v in RANKS_EHP_EHB.items():
-            if math.floor(p["EHB"] + p["EHP"]) >= v:
-                rank += 1
-                continue
-            else:
-                break
-        for _,v in RANKS_POINTS.items():
-            if p["Points"] >= v:
-                rank += 1
-                continue
-            else:
-                break
+        rank = compute_rank(p)
         p["Rank"] = rank
         rankings.append([member, rank, p["Points"], math.floor(p["EHB"] + p["EHP"])])
         redis_conn.set(member, json.dumps(p))
-
     return rankings
+
+def compute_rank(player_json):
+    rank = 0
+    for v in RANKS_EHP_EHB.values():
+        if math.floor(player_json["EHB"] + player_json["EHP"]) >= v:
+            rank += 1
+        else:
+            break
+    for v in RANKS_POINTS.values():
+        if player_json["Points"] >= v:
+            rank += 1
+        else:
+            break
+    return rank
 
 def compute_leaderboard(rankings, redis_conn):
     leaderboard = []
@@ -256,18 +257,20 @@ def compute_leaderboard(rankings, redis_conn):
         redis_conn.set(leaderboard[i][0], json.dumps(p))
     return leaderboard
 
-def track_players(redis_conn, player='None', verbose=False):
+def track_all_players(verbose=False):
+    group_info = get_temple_group_member_info(LOGIN_TEMPLE_ID)
 
     player_tracker = {}
-    if player:
-        members = [player]
-    else:
-        members = [x.lower() for x in get_temple_group_members(LOGIN_TEMPLE_ID)]
-    for member in members:
-        try:
-            gamemode = GAME_MODE[get_member_gamemode(member)["data"]["Game mode"]]
-        except:
-            continue
+    for member in group_info["data"]["memberlist"]:
+        member_info = group_info["data"]["memberlist"][member]
+        print(member)
+        gamemode = GAME_MODE[member_info["game_mode"]]
+        # Check if GIM
+        gim_mode = member_info["gim_mode"]
+        if gamemode == "Main" and gim_mode != None and gim_mode != 0:
+            gamemode = "GIM"
+        print(gamemode)
+
         player_tracker[member] = {
             "Type": gamemode,
             "EHB": 0,
@@ -306,44 +309,133 @@ def track_players(redis_conn, player='None', verbose=False):
             "Position": 0
         }
 
-        stats = get_member_stats(member)["data"]
+        boss_info = member_info["bosses"]
+        skill_info = member_info["skills"]
         if gamemode == "Main":
-            player_tracker[member]["EHB"] = stats["Ehb"]
-            player_tracker[member]["EHP"] = stats["Ehp"]
+            player_tracker[member]["EHB"] = boss_info["Ehb"]
+            player_tracker[member]["EHP"] = skill_info["Ehp"]
         elif gamemode == "IM" or gamemode == "HCIM":
-            player_tracker[member]["EHB"] = stats["Im_ehb"]
-            player_tracker[member]["EHP"] = stats["Im_ehp"]
+            player_tracker[member]["EHB"] = boss_info["Ehb_im"]
+            player_tracker[member]["EHP"] = skill_info["Ehp_im"]
         elif gamemode == "UIM":
-            player_tracker[member]["EHB"] = stats["Im_ehb"]
-            player_tracker[member]["EHP"] = stats["Uim_ehp"]
+            player_tracker[member]["EHB"] = boss_info["Ehb_im"]
+            player_tracker[member]["EHP"] = skill_info["Uim_ehp"]
+        elif gamemode == "GIM":
+            player_tracker[member]["EHB"] = boss_info["Ehb"]
+            player_tracker[member]["EHP"] = skill_info["gim_ehp"]
         else:
             print("unknown gamemode!")
             exit(1)
 
-        skill_cape_max_tracker = check_skill_cape_and_max(stats)
-        player_tracker[member]["Skill Cape"] = skill_cape_max_tracker[0]
-        player_tracker[member]["Maxed"] = skill_cape_max_tracker[1]
-        player_tracker[member]["Minimum Level"] = skill_cape_max_tracker[2]
-        player_tracker[member]["Total XP"] = stats["Overall"]
+    other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
+    for member_data in other_data:
+        if member_data[0].lower() in player_tracker.keys():
+            player_tracker[member]["Other"]["Quest cape"] = True if member_data[1] == "TRUE" else False
+            player_tracker[member]["Other"]["Music cape"] = True if member_data[2] == "TRUE" else False
+            player_tracker[member]["Other"]["Achievement Diary cape"] = True if member_data[3] == "TRUE" else False
+            player_tracker[member]["Other"]["Blood Torva"] = True if member_data[4] == "TRUE" else False
+            player_tracker[member]["Other"]["Hard CA"] = True if member_data[5] == "TRUE" else False
+            player_tracker[member]["Other"]["Elite CA"] = True if member_data[6] == "TRUE" else False
+            player_tracker[member]["Other"]["Master CA"] = True if member_data[7] == "TRUE" else False
+            player_tracker[member]["Other"]["Grandmaster CA"] = True if member_data[8] == "TRUE" else False
+            player_tracker[member]["Points"] = compute_points(player_tracker[member], verbose)
+            player_tracker[member]["Rank"] = compute_rank(player_tracker[member])
+    return player_tracker
 
-        clog = get_collectionlog(member)
-        clog_pets = get_collectionlog_pets(member)
-        try:
-            player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
-        except:
-            pass
+def track_player(member: str, verbose=False):
+
+    player_tracker = {}
+
+    if verbose:
+        print("Fetching data for {}".format(member))
+    stats = get_player_stats(member)["data"]
+    gamemode = GAME_MODE[stats["info"]["Game mode"]]
+    # Check if GIM
+    if gamemode == "Main" and stats["info"]["GIM"] != 0:
+        gamemode = "GIM"
+
+    player_tracker[member] = {
+        "Type": gamemode,
+        "EHB": 0,
+        "EHP": 0,
+        "Collection Log": {
+            "Champion's cape": 0,
+            "CoX CM KC": 0,
+            "CoX KC": 0,
+            "Cursed phalanx": 0,
+            "Fire cape": 0,
+            "Infernal cape": 0,
+            "Dizana's quiver (uncharged)": 0,
+            "Pets": 0,
+            "ToA Expert KC": 0,
+            "ToA KC": 0,
+            "ToB HM KC": 0,
+            "ToB KC": 0,
+            "Total": 0
+        },
+        "Minimum Level": 99,
+        "Skill Cape": False,
+        "Maxed": False,
+        "Other": {
+            "Quest cape": False,
+            "Music cape": False,
+            "Achievement Diary cape": False,
+            "Blood Torva": False,
+            "Hard CA": False,
+            "Elite CA": False,
+            "Master CA": False,
+            "Grandmaster CA": False
+        },
+        "Total XP": 0,
+        "Points": 0,
+        "Rank": 0,
+        "Position": 0
+    }
+
+    stats = get_player_stats(member)["data"]
+    if gamemode == "Main":
+        player_tracker[member]["EHB"] = stats["Ehb"]
+        player_tracker[member]["EHP"] = stats["Ehp"]
+    elif gamemode == "IM" or gamemode == "HCIM":
+        player_tracker[member]["EHB"] = stats["Im_ehb"]
+        player_tracker[member]["EHP"] = stats["Im_ehp"]
+    elif gamemode == "UIM":
+        player_tracker[member]["EHB"] = stats["Im_ehb"]
+        player_tracker[member]["EHP"] = stats["Uim_ehp"]
+    elif gamemode == "GIM":
+        player_tracker[member]["EHB"] = stats["Ehb"]
+        player_tracker[member]["EHP"] = stats["Gim_ehp"]
+    else:
+        print("unknown gamemode!")
+        exit(1)
+
+    skill_cape_max_tracker = check_skill_cape_and_max(stats)
+    player_tracker[member]["Skill Cape"] = skill_cape_max_tracker[0]
+    player_tracker[member]["Maxed"] = skill_cape_max_tracker[1]
+    player_tracker[member]["Minimum Level"] = skill_cape_max_tracker[2]
+    player_tracker[member]["Total XP"] = stats["Overall"]
+
+    clog = get_collectionlog(member)
+    clog_pets = get_collectionlog_pets(member)
+    try:
+        player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
+    except:
+        if verbose:
+            print("Failed to parse collection data.")
+        pass
 
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
-    for member in other_data:
-        member_rsn = member[0].lower()
-        if member_rsn in player_tracker.keys():
-            player_tracker[member_rsn]["Other"]["Quest cape"] = True if member[1] == "TRUE" else False
-            player_tracker[member_rsn]["Other"]["Music cape"] = True if member[2] == "TRUE" else False
-            player_tracker[member_rsn]["Other"]["Achievement Diary cape"] = True if member[3] == "TRUE" else False
-            player_tracker[member_rsn]["Other"]["Blood Torva"] = True if member[4] == "TRUE" else False
-            player_tracker[member_rsn]["Other"]["Hard CA"] = True if member[5] == "TRUE" else False
-            player_tracker[member_rsn]["Other"]["Elite CA"] = True if member[6] == "TRUE" else False
-            player_tracker[member_rsn]["Other"]["Master CA"] = True if member[7] == "TRUE" else False
-            player_tracker[member_rsn]["Other"]["Grandmaster CA"] = True if member[8] == "TRUE" else False
-            player_tracker[member_rsn]["Points"] = compute_points(player_tracker[member_rsn], verbose)
-            redis_conn.set(member_rsn, json.dumps(player_tracker[member_rsn]))
+    for member_data in other_data:
+        if member.lower() == member_data[0].lower():
+            player_tracker[member]["Other"]["Quest cape"] = True if member_data[1] == "TRUE" else False
+            player_tracker[member]["Other"]["Music cape"] = True if member_data[2] == "TRUE" else False
+            player_tracker[member]["Other"]["Achievement Diary cape"] = True if member_data[3] == "TRUE" else False
+            player_tracker[member]["Other"]["Blood Torva"] = True if member_data[4] == "TRUE" else False
+            player_tracker[member]["Other"]["Hard CA"] = True if member_data[5] == "TRUE" else False
+            player_tracker[member]["Other"]["Elite CA"] = True if member_data[6] == "TRUE" else False
+            player_tracker[member]["Other"]["Master CA"] = True if member_data[7] == "TRUE" else False
+            player_tracker[member]["Other"]["Grandmaster CA"] = True if member_data[8] == "TRUE" else False
+            player_tracker[member]["Points"] = compute_points(player_tracker[member], verbose)
+            player_tracker[member]["Rank"] = compute_rank(player_tracker[member])
+            break
+    return player_tracker
