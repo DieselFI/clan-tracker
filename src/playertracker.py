@@ -261,7 +261,13 @@ def track_all_players(verbose=False):
     group_info = get_temple_group_member_info()
 
     player_tracker = {}
-    for member in group_info["data"]["memberlist"]:
+    member_list = group_info["data"]["memberlist"]
+    member_count = len(member_list)
+    current = 0
+    for member in member_list:
+        current += 1
+        if verbose:
+            print("{}/{} {}".format(current, member_count, member))
         member_info = group_info["data"]["memberlist"][member]
         gamemode = GAME_MODE[member_info["game_mode"]]
         # Check if GIM
@@ -269,6 +275,7 @@ def track_all_players(verbose=False):
         if gamemode == "Main" and gim_mode != None and gim_mode != 0:
             gamemode = "GIM"
 
+        member = member.lower()
         player_tracker[member] = {
             "Type": gamemode,
             "EHB": 0,

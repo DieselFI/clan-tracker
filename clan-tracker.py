@@ -25,7 +25,7 @@ if __name__ == "__main__":
         r.set(args.rsn, json.dumps(data[args.rsn]))
     else:
         # Fetch data for all clan members
-        data = playertracker.track_all_players()
+        data = playertracker.track_all_players(args.verbose)
         for k, v in data.items():
             r.set(k, json.dumps(v))
     if args.leaderboard:
