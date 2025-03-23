@@ -323,7 +323,7 @@ def track_all_players(verbose=False):
             player_tracker[member]["EHB"] = boss_info["Ehb_im"]
             player_tracker[member]["EHP"] = skill_info["Ehp_im"]
         elif gamemode == "UIM":
-            player_tracker[member]["EHB"] = boss_info["Uim_ehb"]
+            player_tracker[member]["EHB"] = boss_info["Ehb_uim"]
             player_tracker[member]["EHP"] = skill_info["Uim_ehp"]
         elif gamemode == "GIM":
             player_tracker[member]["EHB"] = boss_info["Ehb"]
@@ -420,7 +420,7 @@ def track_player(member: str, verbose=False):
         player_tracker[member]["EHB"] = stats["Im_ehb"]
         player_tracker[member]["EHP"] = stats["Im_ehp"]
     elif gamemode == "UIM":
-        player_tracker[member]["EHB"] = stats["Im_ehb"]
+        player_tracker[member]["EHB"] = stats["Uim_ehb"]
         player_tracker[member]["EHP"] = stats["Uim_ehp"]
     elif gamemode == "GIM":
         player_tracker[member]["EHB"] = stats["Ehb"]
