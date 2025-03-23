@@ -91,16 +91,6 @@ def get_player_stats(member):
 def get_temple_group_member_info():
     return  requests.get("https://templeosrs.com/api/group_member_info.php?id={}".format(LOGIN_TEMPLE_ID), params={"skills" : 1, "bosses": 1}).json()
 
-def get_collectionlog(member):
-    replacements = [' ', '-', '_']
-    for char in replacements:
-        r = requests.get('https://api.collectionlog.net/collectionlog/user/{}'.format(member.replace(' ', char)))
-        if r.status_code == 200:
-            return requests.get("https://api.collectionlog.net/collectionlog/user/{}".format(member)).json()
-
-def get_collectionlog_pets(member):
-    return requests.get("https://api.collectionlog.net/items/user/{}".format(member), params={"pageName": "All Pets"}).json()
-
 def get_spreadsheet_csv():
     return requests.get("https://docs.google.com/spreadsheets/d/10H-GxmDJ8BAqXVennSXxu5tq7tuZT0tNpJtTxQeMCeA/export?format=csv").text
 
@@ -338,14 +328,14 @@ def track_all_players(verbose=False):
         player_tracker[member]["Minimum Level"] = skill_cape_max_tracker[2]
         player_tracker[member]["Total XP"] = skill_info["Overall"]
 
-        clog = get_collectionlog(member)
-        clog_pets = get_collectionlog_pets(member)
-        try:
-            player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
-        except:
-            if verbose:
-                print("Failed to parse collection data.")
-            pass
+        #clog = get_collectionlog(member)
+        #clog_pets = get_collectionlog_pets(member)
+        #try:
+        #    player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
+        #except:
+        #    if verbose:
+        #        print("Failed to parse collection data.")
+        #    pass
 
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
     for member_data in other_data:
@@ -435,14 +425,14 @@ def track_player(member: str, verbose=False):
     player_tracker[member]["Minimum Level"] = skill_cape_max_tracker[2]
     player_tracker[member]["Total XP"] = stats["Overall"]
 
-    clog = get_collectionlog(member)
-    clog_pets = get_collectionlog_pets(member)
-    try:
-        player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
-    except:
-        if verbose:
-            print("Failed to parse collection data.")
-        pass
+    #clog = get_collectionlog(member)
+    #clog_pets = get_collectionlog_pets(member)
+    #try:
+    #    player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
+    #except:
+    #    if verbose:
+    #        print("Failed to parse collection data.")
+    #    pass
 
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
     for member_data in other_data:
