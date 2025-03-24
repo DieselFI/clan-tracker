@@ -1,10 +1,8 @@
 import requests
-import copy
 import math
 import json
 import csv
 from ratelimit import limits, sleep_and_retry
-from pprint import pprint
 
 LOGIN_TEMPLE_ID = 2124
 MAX_TOTAL_LEVEL = 2277
@@ -47,6 +45,14 @@ RANKS_POINTS = {
     5 : 60
 }
 
+INTERESTING_ITEM_IDS = {
+    21439 : "Champion's cape",
+    6570 : "Fire cape",
+    21295 : "Infernal cape",
+    28947 : "Dizana's quiver (uncharged)",
+    27248 : "Cursed phalanx"
+}
+INTERESTING_CLOG_CATEGORIES = "all_pets,fortis_colosseum,champions_challenge,the_fight_caves,the_inferno,tombs_of_amascut"
 
 @sleep_and_retry
 @limits(calls=5, period=300)
@@ -68,7 +74,25 @@ def get_player_collection_log(member):
         return {}
 
 @sleep_and_retry
-@limits(calls=25, period=60)
+@limits(calls=5, period=300)
+def get_group_collection_log():
+    response = requests.get("https://templeosrs.com/api/collection-log/group_collection_log.php?group={}".format(LOGIN_TEMPLE_ID), params= {"categories" :  INTERESTING_CLOG_CATEGORIES})
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {}
+
+@sleep_and_retry
+@limits(calls=5, period=300)
+def get_item_categories():
+    response = requests.get("https://templeosrs.com/api/collection-log/categories.php")
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {}
+
+@sleep_and_retry
+@limits(calls=5, period=300)
 def get_temple_group_member_info():
     return  requests.get("https://templeosrs.com/api/group_member_info.php?id={}".format(LOGIN_TEMPLE_ID), params={"skills" : 1, "bosses": 1}).json()
 
@@ -117,6 +141,26 @@ def parse_player_clog(clog, player_tracker):
     # Count pets
     all_pets = clog["data"]["items"]["all_pets"]
     player_tracker["Pets"] = len(all_pets)
+
+def parse_group_clog(clog, player_tracker, pet_ids):
+    if clog == {} or "error" in clog.keys():
+        # Not valid clog, no point trying to parse further
+        return
+
+    # Check total count
+    player_tracker["Total"] = max(player_tracker["Total"], clog["total_collections_finished"])
+
+    # Check for interesting items and pets based on item id's
+    pets = 0
+    for item_id in clog["items"]:
+        if item_id in INTERESTING_ITEM_IDS:
+            item_name = INTERESTING_ITEM_IDS[item_id]
+            player_tracker[item_name] = max(player_tracker[item_name], 1)
+        elif item_id in pet_ids:
+            pets += 1
+
+    # Update pet count
+    player_tracker["Pets"] = pets
 
 def check_skill_cape_and_max(stats):
     skill_cape = False
@@ -335,18 +379,35 @@ def track_all_players(verbose=False):
         player_tracker[member]["Minimum Level"] = skill_cape_max_tracker[2]
         player_tracker[member]["Total XP"] = skill_info["Overall"]
 
-        #clog = get_collectionlog(member)
-        #clog_pets = get_collectionlog_pets(member)
-        #try:
-        #    player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
-        #except:
-        #    if verbose:
-        #        print("Failed to parse collection data.")
-        #    pass
+        player_tracker[member]["Raids"]["CoX CM KC"] = boss_info["Chambers of Xeric Challenge Mode"]
+        player_tracker[member]["Raids"]["CoX KC"] = boss_info["Chambers of Xeric"]
+        player_tracker[member]["Raids"]["ToA Expert KC"] = boss_info["Tombs of Amascut Expert"]
+        player_tracker[member]["Raids"]["ToA KC"] = boss_info["Tombs of Amascut"]
+        player_tracker[member]["Raids"]["ToB HM KC"] = boss_info["Theatre of Blood Challenge Mode"]
+        player_tracker[member]["Raids"]["ToB KC"] = boss_info["Theatre of Blood"]
+
+        # Get KC for stuff we can so people get some info even if they haven't synced to temple
+        player_tracker[member]["Collection Log"]["Fire cape"] = boss_info["TzTok-Jad"]
+        player_tracker[member]["Collection Log"]["Infernal cape"] = boss_info["TzKal-Zuk"]
+        player_tracker[member]["Collection Log"]["Dizana's quiver (uncharged)"] = boss_info["Sol Heredit"]
+        player_tracker[member]["Collection Log"]["Total"] = boss_info["Collections"]
+
+    # Clog
+    item_categories = get_item_categories()
+    pet_ids = []
+    if item_categories != {} and "error" not in item_categories.keys():
+        # Get list of id's for all pets
+        for pet_id in item_categories["other"]["all_pets"]:
+            pet_ids.append(pet_id)
+
+    clog_info = get_group_collection_log()
+    for member_clog in clog_info["data"]["members"]:
+        parse_group_clog(member_clog, player_tracker[member_clog["player"].lower()]["Collection Log"], pet_ids)
 
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
     for member_data in other_data:
-        if member_data[0].lower() in player_tracker.keys():
+        member = member_data[0].lower()
+        if member in player_tracker.keys():
             player_tracker[member]["Other"]["Quest cape"] = True if member_data[1] == "TRUE" else False
             player_tracker[member]["Other"]["Music cape"] = True if member_data[2] == "TRUE" else False
             player_tracker[member]["Other"]["Achievement Diary cape"] = True if member_data[3] == "TRUE" else False
@@ -360,7 +421,7 @@ def track_all_players(verbose=False):
     return player_tracker
 
 def track_player(member: str, verbose=False):
-
+    member = member.lower()
     player_tracker = {}
 
     if verbose:
@@ -403,6 +464,7 @@ def track_player(member: str, verbose=False):
     player_tracker[member]["Raids"]["ToB HM KC"] = stats["Theatre of Blood Challenge Mode"]
     player_tracker[member]["Raids"]["ToB KC"] = stats["Theatre of Blood"]
 
+    # Get KC for clog stuff we can so people get some info even if they haven't synced to temple
     player_tracker[member]["Collection Log"]["Fire cape"] = stats["TzTok-Jad"]
     player_tracker[member]["Collection Log"]["Infernal cape"] = stats["TzKal-Zuk"]
     player_tracker[member]["Collection Log"]["Dizana's quiver (uncharged)"] = stats["Sol Heredit"]
