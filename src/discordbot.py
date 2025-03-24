@@ -78,10 +78,9 @@ async def on_message(message):
     message = await message.author.send(content="{} has the following data tracked...\n```{}```".format(rsn, pformat(p)))
   
   if msg.startswith("!update"):
-    rsn = msg.split(" ", 1)[1]
-
-    playertracker.track_player(r, rsn)
-
+    rsn = msg.split(" ", 1)[1].lower()
+    player_tracker = playertracker.track_player(rsn)
+    await r.set(rsn, json.dumps(player_tracker))
     await update_leaderboard()
 
 

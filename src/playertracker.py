@@ -421,9 +421,6 @@ def track_all_players(verbose=False):
     return player_tracker
 
 def track_player(member: str, verbose=False):
-    member = member.lower()
-    player_tracker = {}
-
     if verbose:
         print("Fetching data for {}".format(member))
     stats = get_player_stats(member)["data"]
@@ -432,59 +429,59 @@ def track_player(member: str, verbose=False):
     if gamemode == "Main" and stats["info"]["GIM"] != 0:
         gamemode = "GIM"
 
-    player_tracker[member] = get_base_player_tracker(gamemode)
+    player_tracker = get_base_player_tracker(gamemode)
 
     stats = get_player_stats(member)["data"]
     if gamemode == "Main":
-        player_tracker[member]["EHB"] = stats["Ehb"]
-        player_tracker[member]["EHP"] = stats["Ehp"]
+        player_tracker["EHB"] = stats["Ehb"]
+        player_tracker["EHP"] = stats["Ehp"]
     elif gamemode == "IM" or gamemode == "HCIM":
-        player_tracker[member]["EHB"] = stats["Im_ehb"]
-        player_tracker[member]["EHP"] = stats["Im_ehp"]
+        player_tracker["EHB"] = stats["Im_ehb"]
+        player_tracker["EHP"] = stats["Im_ehp"]
     elif gamemode == "UIM":
-        player_tracker[member]["EHB"] = stats["Uim_ehb"]
-        player_tracker[member]["EHP"] = stats["Uim_ehp"]
+        player_tracker["EHB"] = stats["Uim_ehb"]
+        player_tracker["EHP"] = stats["Uim_ehp"]
     elif gamemode == "GIM":
-        player_tracker[member]["EHB"] = stats["Ehb"]
-        player_tracker[member]["EHP"] = stats["Gim_ehp"]
+        player_tracker["EHB"] = stats["Ehb"]
+        player_tracker["EHP"] = stats["Gim_ehp"]
     else:
         print("unknown gamemode!")
         exit(1)
 
     skill_cape_max_tracker = check_skill_cape_and_max(stats)
-    player_tracker[member]["Skill Cape"] = skill_cape_max_tracker[0]
-    player_tracker[member]["Maxed"] = skill_cape_max_tracker[1]
-    player_tracker[member]["Minimum Level"] = skill_cape_max_tracker[2]
-    player_tracker[member]["Total XP"] = stats["Overall"]
+    player_tracker["Skill Cape"] = skill_cape_max_tracker[0]
+    player_tracker["Maxed"] = skill_cape_max_tracker[1]
+    player_tracker["Minimum Level"] = skill_cape_max_tracker[2]
+    player_tracker["Total XP"] = stats["Overall"]
 
-    player_tracker[member]["Raids"]["CoX CM KC"] = stats["Chambers of Xeric Challenge Mode"]
-    player_tracker[member]["Raids"]["CoX KC"] = stats["Chambers of Xeric"]
-    player_tracker[member]["Raids"]["ToA Expert KC"] = stats["Tombs of Amascut Expert"]
-    player_tracker[member]["Raids"]["ToA KC"] = stats["Tombs of Amascut"]
-    player_tracker[member]["Raids"]["ToB HM KC"] = stats["Theatre of Blood Challenge Mode"]
-    player_tracker[member]["Raids"]["ToB KC"] = stats["Theatre of Blood"]
+    player_tracker["Raids"]["CoX CM KC"] = stats["Chambers of Xeric Challenge Mode"]
+    player_tracker["Raids"]["CoX KC"] = stats["Chambers of Xeric"]
+    player_tracker["Raids"]["ToA Expert KC"] = stats["Tombs of Amascut Expert"]
+    player_tracker["Raids"]["ToA KC"] = stats["Tombs of Amascut"]
+    player_tracker["Raids"]["ToB HM KC"] = stats["Theatre of Blood Challenge Mode"]
+    player_tracker["Raids"]["ToB KC"] = stats["Theatre of Blood"]
 
     # Get KC for clog stuff we can so people get some info even if they haven't synced to temple
-    player_tracker[member]["Collection Log"]["Fire cape"] = stats["TzTok-Jad"]
-    player_tracker[member]["Collection Log"]["Infernal cape"] = stats["TzKal-Zuk"]
-    player_tracker[member]["Collection Log"]["Dizana's quiver (uncharged)"] = stats["Sol Heredit"]
-    player_tracker[member]["Collection Log"]["Total"] = stats["Collections"]
+    player_tracker["Collection Log"]["Fire cape"] = stats["TzTok-Jad"]
+    player_tracker["Collection Log"]["Infernal cape"] = stats["TzKal-Zuk"]
+    player_tracker["Collection Log"]["Dizana's quiver (uncharged)"] = stats["Sol Heredit"]
+    player_tracker["Collection Log"]["Total"] = stats["Collections"]
 
     clog = get_player_collection_log(member)
-    parse_player_clog(clog, player_tracker[member]["Collection Log"])
+    parse_player_clog(clog, player_tracker["Collection Log"])
 
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
     for member_data in other_data:
         if member.lower() == member_data[0].lower():
-            player_tracker[member]["Other"]["Quest cape"] = True if member_data[1] == "TRUE" else False
-            player_tracker[member]["Other"]["Music cape"] = True if member_data[2] == "TRUE" else False
-            player_tracker[member]["Other"]["Achievement Diary cape"] = True if member_data[3] == "TRUE" else False
-            player_tracker[member]["Other"]["Blood Torva"] = True if member_data[4] == "TRUE" else False
-            player_tracker[member]["Other"]["Hard CA"] = True if member_data[5] == "TRUE" else False
-            player_tracker[member]["Other"]["Elite CA"] = True if member_data[6] == "TRUE" else False
-            player_tracker[member]["Other"]["Master CA"] = True if member_data[7] == "TRUE" else False
-            player_tracker[member]["Other"]["Grandmaster CA"] = True if member_data[8] == "TRUE" else False
-            player_tracker[member]["Points"] = compute_points(player_tracker[member], verbose)
-            player_tracker[member]["Rank"] = compute_rank(player_tracker[member])
+            player_tracker["Other"]["Quest cape"] = True if member_data[1] == "TRUE" else False
+            player_tracker["Other"]["Music cape"] = True if member_data[2] == "TRUE" else False
+            player_tracker["Other"]["Achievement Diary cape"] = True if member_data[3] == "TRUE" else False
+            player_tracker["Other"]["Blood Torva"] = True if member_data[4] == "TRUE" else False
+            player_tracker["Other"]["Hard CA"] = True if member_data[5] == "TRUE" else False
+            player_tracker["Other"]["Elite CA"] = True if member_data[6] == "TRUE" else False
+            player_tracker["Other"]["Master CA"] = True if member_data[7] == "TRUE" else False
+            player_tracker["Other"]["Grandmaster CA"] = True if member_data[8] == "TRUE" else False
+            player_tracker["Points"] = compute_points(player_tracker, verbose)
+            player_tracker["Rank"] = compute_rank(player_tracker)
             break
     return player_tracker
