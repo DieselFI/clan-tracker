@@ -80,7 +80,8 @@ def parse_spreadsheet_csv(data):
 
 
 def parse_player_clog(clog, player_tracker):
-    if clog == {} or clog["data"]['total_collections_in_response'] == 0:
+    if clog == {} or "error" in clog.keys():
+        # Not valid clog, no point trying to parse further
         return
     # Check total count
     player_tracker["Total"] = max(player_tracker["Total"], clog["data"]["total_collections_finished"])
