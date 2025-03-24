@@ -9,7 +9,7 @@ from pprint import pprint
 LOGIN_TEMPLE_ID = 2124
 MAX_TOTAL_LEVEL = 2277
 MAX_SINGLE_LEVEL = 99
-ALL_PETS = 56
+ALL_PETS = 62
 GAME_MODE = {
     0 : "Main",
     1 : "IM",
