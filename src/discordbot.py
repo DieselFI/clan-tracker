@@ -80,7 +80,7 @@ async def on_message(message):
   if msg.startswith("!update"):
     rsn = msg.split(" ", 1)[1].lower()
     player_tracker = playertracker.track_player(rsn)
-    await r.set(rsn, json.dumps(player_tracker))
+    r.set(rsn, json.dumps(player_tracker))
     await update_leaderboard()
 
 
