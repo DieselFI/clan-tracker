@@ -16,34 +16,6 @@ GAME_MODE = {
     2 : "UIM",
     3 : "HCIM"
 }
-CLOG_PAGES = {
-    "Champion's cape": "Other/Champion's Challenge",
-    "Fire cape": "Bosses/The Fight Caves",
-    "Infernal cape": "Bosses/The Inferno",
-    "Dizana's quiver (uncharged)": "Bosses/Fortis Colosseum",
-    "CoX KC": "Raids/Chambers of Xeric/0",
-    "CoX CM KC": "Raids/Chambers of Xeric/1",
-    "ToB KC": "Raids/Theatre of Blood/0",
-    "ToB HM KC": "Raids/Theatre of Blood/2",
-    "ToA KC": "Raids/Tombs of Amascut/0",
-    "ToA Expert KC": "Raids/Tombs of Amascut/2",
-    "Cursed phalanx": "Raids/Tombs of Amascut"
-}
-PARSED_CLOG = {
-    "Champion's cape": 0,
-    "Fire cape": 0,
-    "Infernal cape": 0,
-    "Dizana's quiver (uncharged)": 0,
-    "CoX KC": 0,
-    "CoX CM KC": 0,
-    "ToB KC": 0,
-    "ToB HM KC": 0,
-    "ToA KC": 0,
-    "ToA Expert KC": 0,
-    "Cursed phalanx": 0,
-    "Pets": 0,
-    "Total": 0
-}
 CLOG_POINT_CALCULATOR = {
     "Champion's cape": 2,
     "Fire cape": 1,
@@ -120,7 +92,6 @@ def parse_player_clog(clog, player_tracker):
             player_tracker["Champion's cape"] = item["count"]
             break
 
-    return parsed_clog
     # Check Fire cape
     fight_caves = clog["data"]["items"]["the_fight_caves"]
     for item in fight_caves:
