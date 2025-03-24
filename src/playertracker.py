@@ -143,8 +143,6 @@ def compute_points(player_tracker, verbose=False):
         else:
             points_verbose_printer(k, 0, points, verbose)
 
-
-
     if player_tracker["Skill Cape"]:
         points += 1
         points_verbose_printer("Skill Cape", 1, points, verbose)
@@ -164,21 +162,21 @@ def compute_points(player_tracker, verbose=False):
         points += 5
         points_verbose_printer("All pets", 5, points, verbose)
 
-    cox_kc = player_tracker["Collection Log"]["CoX KC"] + player_tracker["Collection Log"]["CoX CM KC"]
-    tob_kc = player_tracker["Collection Log"]["ToB KC"] + player_tracker["Collection Log"]["ToB HM KC"]
-    toa_kc = player_tracker["Collection Log"]["ToA Expert KC"]
+    cox_kc = player_tracker["Raids"]["CoX KC"] + player_tracker["Raids"]["CoX CM KC"]
+    tob_kc = player_tracker["Raids"]["ToB KC"] + player_tracker["Raids"]["ToB HM KC"]
+    toa_kc = player_tracker["Raids"]["ToA Expert KC"]
 
-    if cox_kc >= 10 and tob_kc >= 10 and player_tracker["Collection Log"]["ToA KC"] + toa_kc >= 10:
+    if cox_kc >= 10 and tob_kc >= 10 and player_tracker["Raids"]["ToA KC"] + toa_kc >= 10:
         points +=1
         points_verbose_printer("10 raids kc", 1, points, verbose)
     else:
         points_verbose_printer("10 raids kc", 0, points, verbose)
-    if cox_kc >= 100 and tob_kc >= 100 and player_tracker["Collection Log"]["ToA Expert KC"] >= 100:
+    if cox_kc >= 100 and tob_kc >= 100 and player_tracker["Raids"]["ToA Expert KC"] >= 100:
         points += 2
         points_verbose_printer("100 raids kc", 2, points, verbose)
     else:
         points_verbose_printer("100 raids kc", 0, points, verbose)
-    if player_tracker["Collection Log"]["CoX CM KC"] >= 100 and player_tracker["Collection Log"]["ToB HM KC"] >= 100 and player_tracker["Collection Log"]["Cursed phalanx"] > 0:
+    if player_tracker["Raids"]["CoX CM KC"] >= 100 and player_tracker["Raids"]["ToB HM KC"] >= 100 and player_tracker["Collection Log"]["Cursed phalanx"] > 0:
         points += 4
         points_verbose_printer("100 challenge raids kc and fang kit", 4, points, verbose)
     else:
@@ -247,42 +245,26 @@ def compute_leaderboard(rankings, redis_conn):
         redis_conn.set(leaderboard[i][0], json.dumps(p))
     return leaderboard
 
-def track_all_players(verbose=False):
-    group_info = get_temple_group_member_info()
-
-    player_tracker = {}
-    member_list = group_info["data"]["memberlist"]
-    member_count = len(member_list)
-    current = 0
-    for member in member_list:
-        current += 1
-        if verbose:
-            print("{}/{} {}".format(current, member_count, member))
-        member_info = group_info["data"]["memberlist"][member]
-        gamemode = GAME_MODE[member_info["game_mode"]]
-        # Check if GIM
-        gim_mode = member_info["gim_mode"]
-        if gamemode == "Main" and gim_mode != None and gim_mode != 0:
-            gamemode = "GIM"
-
-        member = member.lower()
-        player_tracker[member] = {
+def get_base_player_tracker(gamemode : str):
+    return {
             "Type": gamemode,
             "EHB": 0,
             "EHP": 0,
-            "Collection Log": {
-                "Champion's cape": 0,
+            "Raids": {
                 "CoX CM KC": 0,
                 "CoX KC": 0,
+                "ToA Expert KC": 0,
+                "ToA KC": 0,
+                "ToB HM KC": 0,
+                "ToB KC": 0,
+            },
+            "Collection Log": {
+                "Champion's cape": 0,
                 "Cursed phalanx": 0,
                 "Fire cape": 0,
                 "Infernal cape": 0,
                 "Dizana's quiver (uncharged)": 0,
                 "Pets": 0,
-                "ToA Expert KC": 0,
-                "ToA KC": 0,
-                "ToB HM KC": 0,
-                "ToB KC": 0,
                 "Total": 0
             },
             "Minimum Level": 99,
@@ -303,6 +285,27 @@ def track_all_players(verbose=False):
             "Rank": 0,
             "Position": 0
         }
+
+def track_all_players(verbose=False):
+    group_info = get_temple_group_member_info()
+
+    player_tracker = {}
+    member_list = group_info["data"]["memberlist"]
+    member_count = len(member_list)
+    current = 0
+    for member in member_list:
+        current += 1
+        if verbose:
+            print("{}/{} {}".format(current, member_count, member))
+        member_info = group_info["data"]["memberlist"][member]
+        gamemode = GAME_MODE[member_info["game_mode"]]
+        # Check if GIM
+        gim_mode = member_info["gim_mode"]
+        if gamemode == "Main" and gim_mode != None and gim_mode != 0:
+            gamemode = "GIM"
+
+        member = member.lower()
+        player_tracker[member] = get_base_player_tracker(gamemode)
 
         boss_info = member_info["bosses"]
         skill_info = member_info["skills"]
@@ -364,43 +367,7 @@ def track_player(member: str, verbose=False):
     if gamemode == "Main" and stats["info"]["GIM"] != 0:
         gamemode = "GIM"
 
-    player_tracker[member] = {
-        "Type": gamemode,
-        "EHB": 0,
-        "EHP": 0,
-        "Collection Log": {
-            "Champion's cape": 0,
-            "CoX CM KC": 0,
-            "CoX KC": 0,
-            "Cursed phalanx": 0,
-            "Fire cape": 0,
-            "Infernal cape": 0,
-            "Dizana's quiver (uncharged)": 0,
-            "Pets": 0,
-            "ToA Expert KC": 0,
-            "ToA KC": 0,
-            "ToB HM KC": 0,
-            "ToB KC": 0,
-            "Total": 0
-        },
-        "Minimum Level": 99,
-        "Skill Cape": False,
-        "Maxed": False,
-        "Other": {
-            "Quest cape": False,
-            "Music cape": False,
-            "Achievement Diary cape": False,
-            "Blood Torva": False,
-            "Hard CA": False,
-            "Elite CA": False,
-            "Master CA": False,
-            "Grandmaster CA": False
-        },
-        "Total XP": 0,
-        "Points": 0,
-        "Rank": 0,
-        "Position": 0
-    }
+    player_tracker[member] = get_base_player_tracker(gamemode)
 
     stats = get_player_stats(member)["data"]
     if gamemode == "Main":
