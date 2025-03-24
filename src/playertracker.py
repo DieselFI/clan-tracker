@@ -88,6 +88,15 @@ def get_player_stats(member):
 
 @sleep_and_retry
 @limits(calls=25, period=60)
+def get_player_collection_log(member):
+    response = requests.get("https://templeosrs.com/api/collection-log/player_collection_log.php?player={}".format(member), params={"categories" : INTERESTING_CLOG_CATEGORIES, "includenames" : 1})
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {}
+
+@sleep_and_retry
+@limits(calls=25, period=60)
 def get_temple_group_member_info():
     return  requests.get("https://templeosrs.com/api/group_member_info.php?id={}".format(LOGIN_TEMPLE_ID), params={"skills" : 1, "bosses": 1}).json()
 
@@ -97,22 +106,45 @@ def get_spreadsheet_csv():
 def parse_spreadsheet_csv(data):
     return list(csv.reader(data.splitlines(), delimiter=","))[1:]
 
-def parse_collectionlog(clog, clog_pets):
-    parsed_clog = copy.deepcopy(PARSED_CLOG)
-    for k,v in CLOG_PAGES.items():
-        tab = v.split("/")[0]
-        page = v.split("/")[1]
 
-        if k.split(" ")[-1] == "KC":
-            parsed_clog[k] = clog["collectionLog"]["tabs"][tab][page]["killCount"][int(v.split("/")[-1])]["amount"]
-            continue
-        for item in clog["collectionLog"]["tabs"][tab][page]["items"]:
-            if item["name"] == k and item["obtained"]:
-                parsed_clog[k] = item["quantity"]
-    parsed_clog["Pets"] = clog_pets["obtainedCount"]
-    parsed_clog["Total"] = clog["collectionLog"]["uniqueObtained"]
+def parse_player_clog(clog, player_tracker):
+    if clog == {} or clog["data"]['total_collections_in_response'] == 0:
+        return
+    # Check total count
+    player_tracker["Total"] = max(player_tracker["Total"], clog["data"]["total_collections_finished"])
+
+    # Check Champion's cape
+    champions_challenge = clog["data"]["items"]["champions_challenge"]
+    for item in champions_challenge:
+        if item["name"] == "Champion's cape":
+            player_tracker["Champion's cape"] = item["count"]
+            break
 
     return parsed_clog
+    # Check Fire cape
+    fight_caves = clog["data"]["items"]["the_fight_caves"]
+    for item in fight_caves:
+        if item["name"] == "Fire cape":
+            player_tracker["Fire cape"] = max(player_tracker["Fire cape"], item["count"])
+            break
+
+    # Check Dizana's quiver
+    fortis_colosseum = clog["data"]["items"]["fortis_colosseum"]
+    for item in fortis_colosseum:
+        if item["name"] == "Dizana's quiver (uncharged)":
+            player_tracker["Dizana's quiver (uncharged)"] = max(player_tracker["Dizana's quiver (uncharged)"], item["count"])
+            break
+
+    # Check Cursed phalanx
+    tombs_of_amascut = clog["data"]["items"]["tombs_of_amascut"]
+    for item in tombs_of_amascut:
+        if item["name"] == "Cursed phalanx":
+            player_tracker["Cursed phalanx"] = item["count"]
+            break
+
+    # Count pets
+    all_pets = clog["data"]["items"]["all_pets"]
+    player_tracker["Pets"] = len(all_pets)
 
 def check_skill_cape_and_max(stats):
     skill_cape = False
@@ -392,14 +424,20 @@ def track_player(member: str, verbose=False):
     player_tracker[member]["Minimum Level"] = skill_cape_max_tracker[2]
     player_tracker[member]["Total XP"] = stats["Overall"]
 
-    #clog = get_collectionlog(member)
-    #clog_pets = get_collectionlog_pets(member)
-    #try:
-    #    player_tracker[member]["Collection Log"] = parse_collectionlog(clog, clog_pets)
-    #except:
-    #    if verbose:
-    #        print("Failed to parse collection data.")
-    #    pass
+    player_tracker[member]["Raids"]["CoX CM KC"] = stats["Chambers of Xeric Challenge Mode"]
+    player_tracker[member]["Raids"]["CoX KC"] = stats["Chambers of Xeric"]
+    player_tracker[member]["Raids"]["ToA Expert KC"] = stats["Tombs of Amascut Expert"]
+    player_tracker[member]["Raids"]["ToA KC"] = stats["Tombs of Amascut"]
+    player_tracker[member]["Raids"]["ToB HM KC"] = stats["Theatre of Blood Challenge Mode"]
+    player_tracker[member]["Raids"]["ToB KC"] = stats["Theatre of Blood"]
+
+    player_tracker[member]["Collection Log"]["Fire cape"] = stats["TzTok-Jad"]
+    player_tracker[member]["Collection Log"]["Infernal cape"] = stats["TzKal-Zuk"]
+    player_tracker[member]["Collection Log"]["Dizana's quiver (uncharged)"] = stats["Sol Heredit"]
+    player_tracker[member]["Collection Log"]["Total"] = stats["Collections"]
+
+    clog = get_player_collection_log(member)
+    parse_player_clog(clog, player_tracker[member]["Collection Log"])
 
     other_data = parse_spreadsheet_csv(get_spreadsheet_csv())
     for member_data in other_data:
