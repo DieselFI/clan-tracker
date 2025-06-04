@@ -22,7 +22,7 @@ if __name__ == "__main__":
     if args.rsn:
         # Fetch data for specific player
         data = playertracker.track_player(args.rsn)
-        r.set(args.rsn, json.dumps(data[args.rsn]))
+        r.set(args.rsn, json.dumps(data))
     else:
         # Fetch data for all clan members
         data = playertracker.track_all_players(args.verbose)
