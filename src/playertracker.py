@@ -7,7 +7,7 @@ from ratelimit import limits, sleep_and_retry
 LOGIN_TEMPLE_ID = 2124
 MAX_TOTAL_LEVEL = 2277
 MAX_SINGLE_LEVEL = 99
-ALL_PETS = 62
+ALL_PETS = 63
 GAME_MODE = {
     0 : "Main",
     1 : "IM",
