@@ -21,14 +21,15 @@ CLOG_POINT_CALCULATOR = {
     "Dizana's quiver (uncharged)": 3
 }
 OTHER_POINT_CALCULATOR = {
-        "Quest cape": 1,
-        "Music cape": 2,
-        "Achievement Diary cape": 3,
-        "Blood Torva": 3,
-        "Hard CA": 1,
-        "Elite CA": 2,
-        "Master CA": 3,
-        "Grandmaster CA": 6
+    "Quest cape": 1,
+    "Music cape": 2,
+    "Achievement Diary cape": 3,
+    "Blood Torva": 3,
+    "Hard CA": 1,
+    "Elite CA": 2,
+    "Master CA": 3,
+    "Grandmaster CA": 6,
+    "Radiant oathplate": 3
 }
 RANKS_EHP_EHB = {
     1 : 100,
@@ -326,7 +327,8 @@ def get_base_player_tracker(gamemode : str):
                 "Hard CA": False,
                 "Elite CA": False,
                 "Master CA": False,
-                "Grandmaster CA": False
+                "Grandmaster CA": False,
+                "Radiant oathplate": False
             },
             "Total XP": 0,
             "Points": 0,
@@ -416,6 +418,7 @@ def track_all_players(verbose=False):
             player_tracker[member]["Other"]["Elite CA"] = True if member_data[6] == "TRUE" else False
             player_tracker[member]["Other"]["Master CA"] = True if member_data[7] == "TRUE" else False
             player_tracker[member]["Other"]["Grandmaster CA"] = True if member_data[8] == "TRUE" else False
+            player_tracker[member]["Other"]["Radiant oathplate"] = True if member_data[9] == "TRUE" else False
             player_tracker[member]["Points"] = compute_points(player_tracker[member], verbose)
             player_tracker[member]["Rank"] = compute_rank(player_tracker[member])
     return player_tracker
@@ -481,6 +484,7 @@ def track_player(member: str, verbose=False):
             player_tracker["Other"]["Elite CA"] = True if member_data[6] == "TRUE" else False
             player_tracker["Other"]["Master CA"] = True if member_data[7] == "TRUE" else False
             player_tracker["Other"]["Grandmaster CA"] = True if member_data[8] == "TRUE" else False
+            player_tracker["Other"]["Radiant oathplate"] = True if member_data[9] == "TRUE" else False
             player_tracker["Points"] = compute_points(player_tracker, verbose)
             player_tracker["Rank"] = compute_rank(player_tracker)
             break
