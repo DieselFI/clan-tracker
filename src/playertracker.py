@@ -5,8 +5,6 @@ import csv
 from ratelimit import limits, sleep_and_retry
 
 LOGIN_TEMPLE_ID = 2124
-MAX_TOTAL_LEVEL = 2277
-MAX_SINGLE_LEVEL = 99
 ALL_PETS = 63
 GAME_MODE = {
     0 : "Main",
@@ -166,8 +164,6 @@ def parse_group_clog(clog, player_tracker, pet_ids):
 def check_skill_cape_and_max(stats):
     skill_cape = False
     maxed = False
-    if stats["Overall_level"] == 2277:
-        maxed = True
     min_level = 99
     for k,v in stats.items():
         if "_level" in k:
@@ -175,6 +171,8 @@ def check_skill_cape_and_max(stats):
                 min_level = v
             if v == 99:
                 skill_cape = True
+    if min_level == 99:
+        maxed = True
 
     return skill_cape, maxed, min_level
 
